@@ -1,0 +1,18 @@
+5 pin header on my pcb:
+
+Pin 1: 3.3v
+Pin 2: P33 ESP32 (PIN_ADC1_5) = left pedal
+Pin 3: P34 ESP32 (PIN_ADC1_6) = middle pedal
+Pin 4: GND
+Pin 5: P32 ESP32 (PIN_ADC1_4) = righ pedal
+
+readings:
+unpressed:
+adc1_4: 3968
+adc1_5: 0
+adc1_6: 0
+
+pressed:
+adc1_4: fully depressed: 765. continuous scale.
+adc1_5: 1
+adc1_6: 1
