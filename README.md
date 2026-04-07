@@ -1,6 +1,6 @@
 # Casio SP-34 Pedals USB-MIDI Controller
 
-This project lets you use a Casio SP-34 as a USB midi controller. It also supports continuous pedalling for the sustain pedal (i.e. a full range of values from 0-127, rather than just the typical half-pedalling).
+This project lets you use a Casio SP-34 as a USB midi controller by connecting it to an ESP32-S3. It also supports continuous pedalling for the sustain pedal (i.e. a full range of values from 0-127, rather than just the typical half-pedalling).
 
 There is a PCB here to make the connections a bit tidier:
 https://github.com/endeavour/kicad_projects/tree/main/casio_pedals
