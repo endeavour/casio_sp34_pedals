@@ -6,15 +6,15 @@
 
 WebServer server(80);
 
-const int PIN_ADC1_4 = 32;
-const int PIN_ADC1_5 = 33;
-const int PIN_ADC1_6 = 34;
+const int PIN_LEFT = GPIO_NUM_5;
+const int PIN_MIDDLE = GPIO_NUM_6;
+const adc1_channel_t ADC_RIGHT = ADC1_CHANNEL_3;
 
 void init_pins() {
-    adc1_config_width(ADC_WIDTH_12Bit);
-    adc1_config_channel_atten(ADC1_CHANNEL_4, ADC_ATTEN_DB_12);
-    pinMode(PIN_ADC1_5, INPUT);
-    pinMode(PIN_ADC1_6, INPUT);
+    adc1_config_width(ADC_WIDTH_MAX);
+    adc1_config_channel_atten(ADC_RIGHT, ADC_ATTEN_DB_12);
+    pinMode(PIN_LEFT, INPUT_PULLDOWN);
+    pinMode(PIN_MIDDLE, INPUT_PULLDOWN);    
 }
 
 void setup() {
@@ -32,14 +32,14 @@ void setup() {
     Serial.println(WiFi.localIP());
 
     server.on("/", []() {
-        int adc1_4_raw = adc1_get_raw(ADC1_CHANNEL_4);
-        int adc1_5_raw = digitalRead(PIN_ADC1_5);
-        int adc1_6_raw = digitalRead(PIN_ADC1_6);
+        int adc_right = adc1_get_raw(ADC_RIGHT);
+        int pin_left = digitalRead(PIN_LEFT);
+        int pin_middle = digitalRead(PIN_MIDDLE);
 
         char json[256];
         snprintf(json, sizeof(json),
-            "{\"ADC1_4\":%d,\"ADC1_5\":%d,\"ADC1_6\":%d,\"rssi\":%d}",
-            adc1_4_raw, adc1_5_raw, adc1_6_raw, WiFi.RSSI());
+            "{\"LEFT\":%d,\"MIDDLE\":%d,\"RIGHT\":%d,\"rssi\":%d}",
+            pin_left, pin_middle, adc_right, WiFi.RSSI());
         server.send(200, "application/json", json);
     });
 
