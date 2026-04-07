@@ -1,20 +1,26 @@
-#include <WiFi.h>
-#include <WebServer.h>
+#include <USB.h>
+#include <USBMIDI.h>
 #include <driver/adc.h>
-#include <esp_adc_cal.h>
-#include "secrets.h"
 
-WebServer server(80);
+USBMIDI MIDI("Casio Piano Pedals");
 
 const int PIN_LEFT = GPIO_NUM_5;
 const int PIN_MIDDLE = GPIO_NUM_6;
 const adc1_channel_t ADC_RIGHT = ADC1_CHANNEL_3;
 
+const int CC_LEFT_PEDAL = 67;
+const int CC_MIDDLE_PEDAL = 66;
+const int CC_RIGHT_PEDAL = 64;
+
+bool leftPressed = false;
+bool middlePressed = false;
+int lastRightValue = -1;
+
 void init_pins() {
     adc1_config_width(ADC_WIDTH_MAX);
     adc1_config_channel_atten(ADC_RIGHT, ADC_ATTEN_DB_12);
     pinMode(PIN_LEFT, INPUT_PULLDOWN);
-    pinMode(PIN_MIDDLE, INPUT_PULLDOWN);    
+    pinMode(PIN_MIDDLE, INPUT_PULLDOWN);  
 }
 
 void setup() {
@@ -23,29 +29,34 @@ void setup() {
 
     init_pins();
 
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("\nWiFi connected");
-    Serial.println(WiFi.localIP());
+    MIDI.begin();
+    USB.begin();
 
-    server.on("/", []() {
-        int adc_right = adc1_get_raw(ADC_RIGHT);
-        int pin_left = digitalRead(PIN_LEFT);
-        int pin_middle = digitalRead(PIN_MIDDLE);
-
-        char json[256];
-        snprintf(json, sizeof(json),
-            "{\"LEFT\":%d,\"MIDDLE\":%d,\"RIGHT\":%d,\"rssi\":%d}",
-            pin_left, pin_middle, adc_right, WiFi.RSSI());
-        server.send(200, "application/json", json);
-    });
-
-    server.begin();
+    Serial.println("Casio Piano Pedals USB MIDI Controller Ready");
 }
 
 void loop() {
-    server.handleClient();
+    bool leftNow = digitalRead(PIN_LEFT) == HIGH;
+    if (leftNow != leftPressed) {
+        leftPressed = leftNow;
+        MIDI.controlChange(CC_LEFT_PEDAL, leftNow ? 127 : 0, 1);
+        Serial.printf("Left pedal: %s\n", leftNow ? "pressed" : "released");
+    }
+
+    bool middleNow = digitalRead(PIN_MIDDLE) == HIGH;
+    if (middleNow != middlePressed) {
+        middlePressed = middleNow;
+        MIDI.controlChange(CC_MIDDLE_PEDAL, middleNow ? 127 : 0, 1);
+        Serial.printf("Middle pedal: %s\n", middleNow ? "pressed" : "released");
+    }
+
+    int rightRaw = adc1_get_raw(ADC_RIGHT);
+    int rightValue = map(rightRaw, 850, 4090, 127, 0);
+    rightValue = constrain(rightValue, 0, 127);
+
+    if (abs(rightValue - lastRightValue) > 2) {
+        lastRightValue = rightValue;
+        MIDI.controlChange(CC_RIGHT_PEDAL, rightValue, 1);
+        Serial.printf("Right pedal: %d (raw: %d)\n", rightValue, rightRaw);
+    }
 }
